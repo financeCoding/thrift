@@ -241,3 +241,9 @@ test-driver
 /tutorial/js/build/
 /ylwrap
 
+compiler/cpp/build
+compiler/cpp/build_ec
+pubspec.lock
+lib/dart/packages
+lib/dart/test/packages
+MYMETA.json
