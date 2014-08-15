@@ -640,7 +640,7 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
 
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {" << endl
+        out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " != null) {" << endl
             << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl
             << indent() << indent() << "}" << endl;
     }
@@ -773,7 +773,7 @@ void t_dart_generator::generate_js_struct_writer(ofstream& out,
   indent(out) << "output.writeStructBegin('" << name << "');" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << indent() << "if (this." << (*f_iter)->get_name() <<  " !== null && this." << (*f_iter)->get_name() << " !== undefined) {" << endl;
+    out << indent() << "if (this." << (*f_iter)->get_name() <<  " != null && this." << (*f_iter)->get_name() << " != null) {" << endl;
     indent_up();
 
     indent(out) <<
@@ -1253,7 +1253,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       } else {
         f_service_ << indent() << "if (callback) {" << endl;
         f_service_ << indent() << "  var self = this;" << endl;
-        f_service_ << indent() << "  this.output.getTransport().flush(true, function() {" << endl;
+        f_service_ << indent() << "  this.output.getTransport().flush(true, () {" << endl;
         f_service_ << indent() << "    var result = null;" << endl;
         f_service_ << indent() << "    try {" << endl;
         f_service_ << indent() << "      result = self.recv_" << funname << "();" << endl;
@@ -1302,7 +1302,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
 
       if (gen_node_) {
         f_service_ <<
-          indent() << "var callback = this._reqs[rseqid] || function() {};" << endl <<
+          indent() << "var callback = this._reqs[rseqid] || () {};" << endl <<
           indent() << "delete this._reqs[rseqid];" << endl;
       } else {
         f_service_ <<
@@ -1336,7 +1336,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "if (null !== result." << (*x_iter)->get_name() << ") {" << endl <<
+          indent() << "if (null != result." << (*x_iter)->get_name() << ") {" << endl <<
           indent() << "  " << render_recv_throw("result." + (*x_iter)->get_name()) << endl <<
           indent() << "}" << endl;
       }
@@ -1344,7 +1344,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       // Careful, only return result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if (null !== result.success) {" << endl <<
+          indent() << "if (null != result.success) {" << endl <<
           indent() << "  " << render_recv_return("result.success") << endl <<
           indent() << "}" << endl;
         f_service_ <<
