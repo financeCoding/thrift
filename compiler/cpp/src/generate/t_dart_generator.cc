@@ -60,11 +60,6 @@ class t_dart_generator : public t_oop_generator {
      iter = parsed_options.find("jquery");
      gen_jquery_ = (iter != parsed_options.end());
 
-     if (!gen_node_) {
-       iter = parsed_options.find("ts");
-       gen_ts_ = (iter != parsed_options.end());
-     }
-
      if (gen_node_ && gen_jquery_) {
        throw "Invalid switch: [-gen js:node,jquery] options not compatible, try: [-gen js:node -gen js:jquery]";
      }
@@ -309,11 +304,6 @@ class t_dart_generator : public t_oop_generator {
   bool gen_jquery_;
 
   /**
-   * True if we should generate a TypeScript Definition File for each service.
-   */
-  bool gen_ts_;
-
-  /**
    * The name of the defined module(s), for TypeScript Definition Files.
    */
   string ts_module_;
@@ -344,20 +334,11 @@ void t_dart_generator::init_generator() {
   string f_types_name = outdir+program_->get_name()+"_types.js";
   f_types_.open(f_types_name.c_str());
 
-  if (gen_ts_) {
-    string f_types_ts_name = outdir + program_->get_name() + "_types.d.ts";
-    f_types_ts_.open(f_types_ts_name.c_str());
-  }
-
   // Print header
   f_types_ <<
     autogen_comment() <<
     js_includes() << endl <<
     render_includes() << endl;
-
-  if (gen_ts_) {
-    f_types_ts_ << autogen_comment() << endl;
-  }
 
   if (gen_node_) {
     f_types_ << "var ttypes = module.exports = {};" << endl;
@@ -374,10 +355,6 @@ void t_dart_generator::init_generator() {
       f_types_ << "if (typeof " << pns << " === 'undefined') {" << endl;
         f_types_ << "  " << pns << " = {};" << endl;
         f_types_ << "}" << endl;
-    }
-    if (gen_ts_) {
-      ts_module_ = pns;
-      f_types_ts_ << "declare module " << ts_module_ << " {";
     }
   }
 
@@ -422,13 +399,6 @@ void t_dart_generator::close_generator() {
   // Close types file(s)
 
   f_types_.close();
-
-  if (gen_ts_) {
-    if (!ts_module_.empty()) {
-      f_types_ts_ << "}";
-    }
-    f_types_ts_.close();
-  }
 }
 
 /**
@@ -449,23 +419,12 @@ void t_dart_generator::generate_typedef(t_typedef* ttypedef) {
 void t_dart_generator::generate_enum(t_enum* tenum) {
   f_types_ << js_type_namespace(tenum->get_program())<<tenum->get_name()<<" = {"<<endl;
 
-  if (gen_ts_) {
-    f_types_ts_ <<
-      ts_print_doc(tenum) <<
-      ts_indent() << ts_declare() << "enum " << tenum->get_name() << " {" << endl;
-  }
-
   indent_up();
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    if (gen_ts_) {
-      f_types_ts_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value << "," << endl;
-      //add 'value: key' in addition to 'key: value' for TypeScript enums
-      f_types_ << indent() << "'" << value << "' : '" << (*c_iter)->get_name() << "'," << endl;
-    }
     f_types_ << indent() << "'" << (*c_iter)->get_name() << "' : " << value;
     if (c_iter != constants.end()-1) {
         f_types_ << ",";
@@ -476,10 +435,6 @@ void t_dart_generator::generate_enum(t_enum* tenum) {
   indent_down();
 
   f_types_ << "};"<<endl;
-
-  if (gen_ts_) {
-    f_types_ts_ << ts_indent() << "}" << endl;
-  }
 }
 
 /**
@@ -492,12 +447,6 @@ void t_dart_generator::generate_const(t_const* tconst) {
 
   f_types_ << js_type_namespace(program_)  << name << " = ";
   f_types_ << render_const_value(type, value) << ";" << endl;
-
-  if (gen_ts_) {
-    f_types_ts_ <<
-      ts_print_doc(tconst) <<
-      ts_indent() << ts_declare() << "var " << name << ": " << ts_get_type(type) << ";" << endl;
-  }
 }
 
 /**
@@ -649,11 +598,6 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
     }
   } else {
     out << js_namespace(tstruct->get_program()) << tstruct->get_name() <<" = function(args) {" << endl;
-    if (gen_ts_) {
-      f_types_ts_ <<
-        ts_print_doc(tstruct) <<
-        ts_indent() << ts_declare() << "class " << tstruct->get_name() << (is_exception ? " extends Thrift.TException" : "" ) << " {" << endl;
-    }
   }
 
   indent_up();
@@ -674,9 +618,6 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
         out << indent() << "this." << (*m_iter)->get_name() << " = " << dval << ";" << endl;
     } else {
         out << indent() <<  dval << ";" << endl;
-    }
-    if (gen_ts_) {
-      f_types_ts_ << ts_indent() << (*m_iter)->get_name() << ": " << ts_get_type((*m_iter)->get_type()) << ";" << endl;
     }
   }
 
@@ -702,31 +643,20 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
     }
 
     out << indent() <<  "if (args) {" << endl;
-    if (gen_ts_) {
-      f_types_ts_ << endl << ts_indent() << "constructor(args?: { ";
-    }
+
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {" << endl
             << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl
             << indent() << indent() << "}" << endl;
-        if (gen_ts_) {
-          f_types_ts_ << (*m_iter)->get_name() << ts_get_req(*m_iter) << ": " << ts_get_type((*m_iter)->get_type()) << "; ";
-        }
     }
 
     out << indent() <<  "}" << endl;
-    if (gen_ts_) {
-      f_types_ts_ << "});" << endl;
-    }
 
   }
 
   indent_down();
   out << "};" << endl;
-  if (gen_ts_) {
-    f_types_ts_ << ts_indent() << "}" << endl;
-  }
 
   if (is_exception) {
     out << "Thrift.inherits(" <<
@@ -886,25 +816,10 @@ void t_dart_generator::generate_service(t_service* tservice) {
     string f_service_name = get_out_dir()+service_name_+".js";
     f_service_.open(f_service_name.c_str());
 
-    if (gen_ts_) {
-      string f_service_ts_name = get_out_dir() + service_name_ + ".d.ts";
-      f_service_ts_.open(f_service_ts_name.c_str());
-    }
-
     f_service_ <<
       autogen_comment() <<
       js_includes() << endl <<
       render_includes() << endl;
-
-    if (gen_ts_) {
-      if (tservice->get_extends() != NULL) {
-        f_service_ts_ << "/// <reference path=\"" << tservice->get_extends()->get_name() << ".d.ts\" />" << endl;
-      }
-      f_service_ts_ << autogen_comment() << endl;
-      if (!ts_module_.empty()) {
-        f_service_ts_ << "declare module " << ts_module_ << " {";
-      }
-    }
 
     if (gen_node_) {
       if (tservice->get_extends() != NULL) {
@@ -930,12 +845,6 @@ void t_dart_generator::generate_service(t_service* tservice) {
     }
 
     f_service_.close();
-    if (gen_ts_) {
-      if (!ts_module_.empty()) {
-        f_service_ts_ << "}";
-      }
-      f_service_ts_.close();
-    }
 }
 
 /**
@@ -1104,9 +1013,6 @@ void t_dart_generator::generate_process_function(t_service* tservice,
  * @param tservice The service to generate a header definition for
  */
 void t_dart_generator::generate_service_helpers(t_service* tservice) {
-	  //Do not generate TS definitions for helper functions
-	  bool gen_ts_tmp = gen_ts_;
-	  gen_ts_ = false;
 
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::iterator f_iter;
@@ -1123,7 +1029,6 @@ void t_dart_generator::generate_service_helpers(t_service* tservice) {
         ts->set_name(name);
     }
 
-	  gen_ts_ = gen_ts_tmp;
 }
 
 /**
@@ -1177,15 +1082,6 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
   } else {
     f_service_ <<
         js_namespace(tservice->get_program()) << service_name_ << "Client = function(input, output) {"<<endl;
-    if (gen_ts_) {
-      f_service_ts_ <<
-        ts_print_doc(tservice) <<
-        ts_indent() << ts_declare() << "class " << service_name_ << "Client ";
-      if (tservice->get_extends() != NULL) {
-        f_service_ts_ << "extends " << tservice->get_extends()->get_name() << "Client ";
-      }
-      f_service_ts_ << "{" << endl;
-    }
   }
 
   indent_up();
@@ -1202,14 +1098,6 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       indent() << "  this.input = input;" << endl <<
       indent() << "  this.output = (!output) ? input : output;" << endl <<
       indent() << "  this.seqid = 0;" << endl;
-    if (gen_ts_) {
-       f_service_ts_ <<
-         ts_indent() << "input: Thrift.TJSONProtocol;" << endl <<
-         ts_indent() << "output: Thrift.TJSONProtocol;" << endl <<
-         ts_indent() << "seqid: number;" << endl <<
-         endl <<
-         ts_indent() << "constructor(input: Thrift.TJSONProtocol, output?: Thrift.TJSONProtocol);" << endl;
-    }
   }
 
 
@@ -1249,16 +1137,6 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       function_signature(*f_iter, "", true) << " {" << endl;
 
     indent_up();
-
-    if (gen_ts_) {
-      f_service_ts_ <<
-      ts_print_doc(*f_iter) <<
-      //function definition without callback
-      ts_indent() << ts_function_signature(*f_iter, false) << endl <<
-      ts_print_doc(*f_iter) <<
-      //overload with callback
-      ts_indent() << ts_function_signature(*f_iter, true) << endl;
-    }
 
     if (gen_node_) {          //Node.js output      ./gen-nodejs
       f_service_ <<
@@ -1490,10 +1368,6 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       f_service_ << "};"<<endl;
 
     }
-  }
-
-  if (gen_ts_) {
-    f_service_ts_ << ts_indent() << "}" <<  endl;
   }
 
 }
