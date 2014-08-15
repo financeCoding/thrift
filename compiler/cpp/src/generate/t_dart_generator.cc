@@ -704,7 +704,7 @@ void t_dart_generator::generate_js_struct_reader(ofstream& out,
 
 
   // Check for field STOP marker and break
-  indent(out) << "if (ftype == Thrift.Type.STOP) {" << endl;
+  indent(out) << "if (ftype == ThriftType.STOP) {" << endl;
   indent_up();
   indent(out) << "break;" << endl;
   indent_down();
@@ -888,10 +888,10 @@ void t_dart_generator::generate_service_processor(t_service* tservice) {
                << indent() << "if (this['process_' + r.fname]) {" << endl
                << indent() << "  return this['process_' + r.fname].call(this, r.rseqid, input, output);" << endl
                << indent() << "} else {" << endl
-               << indent() << "  input.skip(Thrift.Type.STRUCT);" << endl
+               << indent() << "  input.skip(ThriftType.STRUCT);" << endl
                << indent() << "  input.readMessageEnd();" << endl
-               << indent() << "  var x = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN_METHOD, 'Unknown function ' + r.fname);" << endl
-               << indent() << "  output.writeMessageBegin(r.fname, Thrift.MessageType.EXCEPTION, r.rseqid);" << endl
+               << indent() << "  var x = new TApplicationException(TApplicationExceptionType.UNKNOWN_METHOD, 'Unknown function ' + r.fname);" << endl
+               << indent() << "  output.writeMessageBegin(r.fname, ThriftMessageType.EXCEPTION, r.rseqid);" << endl
                << indent() << "  x.write(output);" << endl
                << indent() << "  output.writeMessageEnd();" << endl
                << indent() << "  output.flush();" << endl
@@ -967,7 +967,7 @@ void t_dart_generator::generate_process_function(t_service* tservice,
     f_service_ <<
         indent() << "var result = new " << resultname << "({success: result});" << endl <<
         indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
-        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+        "\", ThriftMessageType.REPLY, seqid);" << endl <<
         indent() << "result.write(output);" << endl <<
         indent() << "output.writeMessageEnd();" << endl <<
         indent() << "output.flush();" << endl;
@@ -977,7 +977,7 @@ void t_dart_generator::generate_process_function(t_service* tservice,
     f_service_ <<
         indent() << "var result = new " << resultname << "(err);" << endl <<
         indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
-        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+        "\", ThriftMessageType.REPLY, seqid);" << endl <<
         indent() << "result.write(output);" << endl <<
         indent() << "output.writeMessageEnd();" << endl <<
         indent() << "output.flush();" << endl;
@@ -999,7 +999,7 @@ void t_dart_generator::generate_process_function(t_service* tservice,
     f_service_ <<
         indent() << "var result = new " << resultname << "((err != null ? err : {success: result}));" << endl <<
         indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
-        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+        "\", ThriftMessageType.REPLY, seqid);" << endl <<
         indent() << "result.write(output);" << endl <<
         indent() << "output.writeMessageEnd();" << endl <<
         indent() << "output.flush();" << endl;
@@ -1234,10 +1234,10 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
 
     // Serialize the request header
     if (gen_node_) {
-       f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', Thrift.MessageType.CALL, this.seqid());" << endl;
+       f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', ThriftMessageType.CALL, this.seqid());" << endl;
     }
     else {
-       f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', Thrift.MessageType.CALL, this.seqid);" << endl;
+       f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', ThriftMessageType.CALL, this.seqid);" << endl;
     }
 
     f_service_ <<
@@ -1321,8 +1321,8 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       }
 
       f_service_ <<
-          indent() << "if (mtype == Thrift.MessageType.EXCEPTION) {" << endl <<
-          indent() << "  var x = new Thrift.TApplicationException();" << endl <<
+          indent() << "if (mtype == ThriftMessageType.EXCEPTION) {" << endl <<
+          indent() << "  var x = new TApplicationException();" << endl <<
           indent() << "  x.read(" << inputVar << ");" << endl <<
           indent() << "  " << inputVar << ".readMessageEnd();" << endl <<
           indent() << "  " << render_recv_throw("x") << endl <<
@@ -1939,30 +1939,30 @@ string t_dart_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
-      return "Thrift.Type.STRING";
+      return "ThriftType.STRING";
     case t_base_type::TYPE_BOOL:
-      return "Thrift.Type.BOOL";
+      return "ThriftType.BOOL";
     case t_base_type::TYPE_BYTE:
-      return "Thrift.Type.BYTE";
+      return "ThriftType.BYTE";
     case t_base_type::TYPE_I16:
-      return "Thrift.Type.I16";
+      return "ThriftType.I16";
     case t_base_type::TYPE_I32:
-      return "Thrift.Type.I32";
+      return "ThriftType.I32";
     case t_base_type::TYPE_I64:
-      return "Thrift.Type.I64";
+      return "ThriftType.I64";
     case t_base_type::TYPE_DOUBLE:
-      return "Thrift.Type.DOUBLE";
+      return "ThriftType.DOUBLE";
     }
   } else if (type->is_enum()) {
-    return "Thrift.Type.I32";
+    return "ThriftType.I32";
   } else if (type->is_struct() || type->is_xception()) {
-    return "Thrift.Type.STRUCT";
+    return "ThriftType.STRUCT";
   } else if (type->is_map()) {
-    return "Thrift.Type.MAP";
+    return "ThriftType.MAP";
   } else if (type->is_set()) {
-    return "Thrift.Type.SET";
+    return "ThriftType.SET";
   } else if (type->is_list()) {
-    return "Thrift.Type.LIST";
+    return "ThriftType.LIST";
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();

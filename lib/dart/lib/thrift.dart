@@ -71,7 +71,7 @@ class ThriftType {
  * @property {number}  EXCEPTION - RPC call exception response from server to client.
  * @property {number}  ONEWAY    - Oneway RPC call from client to server with no response.
  */
-class MessageType {
+class ThriftMessageType {
   static const int 
   CALL = 1,
   REPLY = 2,
