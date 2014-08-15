@@ -42,7 +42,7 @@ import "dart:async";
  * @property {number}  UTF8   - Array of bytes representing a string of UTF8 encoded characters.
  * @property {number}  UTF16  - Array of bytes representing a string of UTF16 encoded characters.
  */
-class Type {
+class ThriftType {
   static const int 
   STOP = 0,
   VOID = 1,
@@ -301,17 +301,17 @@ class TJSONProtocol extends Protocol {
  * @see {@link Thrift.Type}
  */
 const ProtocolType = const {
-  Type.BOOL : '"tf"',
-  Type.BYTE : '"i8"',
-  Type.I16 : '"i16"',
-  Type.I32 : '"i32"',
-  Type.I64 : '"i64"',
-  Type.DOUBLE : '"dbl"',
-  Type.STRUCT : '"rec"',
-  Type.STRING : '"str"',
-  Type.MAP : '"map"',
-  Type.LIST : '"lst"',
-  Type.SET : '"set"'
+  ThriftType.BOOL : '"tf"',
+  ThriftType.BYTE : '"i8"',
+  ThriftType.I16 : '"i16"',
+  ThriftType.I32 : '"i32"',
+  ThriftType.I64 : '"i64"',
+  ThriftType.DOUBLE : '"dbl"',
+  ThriftType.STRUCT : '"rec"',
+  ThriftType.STRING : '"str"',
+  ThriftType.MAP : '"map"',
+  ThriftType.LIST : '"lst"',
+  ThriftType.SET : '"set"'
 };
 
 /**
@@ -320,17 +320,17 @@ const ProtocolType = const {
  * @see {@link Thrift.Type}
  */
 class ProtocolRType {
-  static const tf = Type.BOOL;
-  static const i8 = Type.BYTE;
-  static const i16 = Type.I16;
-  static const i32 = Type.I32;
-  static const i64 = Type.I64;
-  static const dbl = Type.DOUBLE;
-  static const rec = Type.STRUCT;
-  static const str = Type.STRING;
-  static const map = Type.MAP;
-  static const lst = Type.LIST;
-  static const set = Type.SET;
+  static const tf = ThriftType.BOOL;
+  static const i8 = ThriftType.BYTE;
+  static const i16 = ThriftType.I16;
+  static const i32 = ThriftType.I32;
+  static const i64 = ThriftType.I64;
+  static const dbl = ThriftType.DOUBLE;
+  static const rec = ThriftType.STRUCT;
+  static const str = ThriftType.STRING;
+  static const map = ThriftType.MAP;
+  static const lst = ThriftType.LIST;
+  static const set = ThriftType.SET;
 }
 
 final ProtocolVersion = 1;
