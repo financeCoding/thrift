@@ -44,9 +44,9 @@ static const string endl = "\n";  // avoid ostream << std::endl flushes
 /**
  * JS code generator.
  */
-class t_js_generator : public t_oop_generator {
+class t_dart_generator : public t_oop_generator {
  public:
-  t_js_generator(t_program* program,
+  t_dart_generator(t_program* program,
                 const std::map<std::string, std::string>& parsed_options,
                 const std::string& option_string) :
      t_oop_generator(program) {
@@ -334,7 +334,7 @@ class t_js_generator : public t_oop_generator {
  *
  * @param tprogram The program to generate
  */
-void t_js_generator::init_generator() {
+void t_dart_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
 
@@ -386,7 +386,7 @@ void t_js_generator::init_generator() {
 /**
  * Prints standard js imports
  */
-string t_js_generator::js_includes() {
+string t_dart_generator::js_includes() {
   if (gen_node_) {
     return string("var thrift = require('thrift');\n"
       "var Thrift = thrift.Thrift;\n"
@@ -399,7 +399,7 @@ string t_js_generator::js_includes() {
 /**
  * Renders all the imports necessary for including another Thrift program
  */
-string t_js_generator::render_includes() {
+string t_dart_generator::render_includes() {
   string result = "";
 
   if (gen_node_) {
@@ -418,7 +418,7 @@ string t_js_generator::render_includes() {
 /**
  * Close up (or down) some filez.
  */
-void t_js_generator::close_generator() {
+void t_dart_generator::close_generator() {
   // Close types file(s)
 
   f_types_.close();
@@ -436,7 +436,7 @@ void t_js_generator::close_generator() {
  *
  * @param ttypedef The type definition
  */
-void t_js_generator::generate_typedef(t_typedef* ttypedef) {
+void t_dart_generator::generate_typedef(t_typedef* ttypedef) {
   (void) ttypedef;
 }
 
@@ -446,7 +446,7 @@ void t_js_generator::generate_typedef(t_typedef* ttypedef) {
  *
  * @param tenum The enumeration
  */
-void t_js_generator::generate_enum(t_enum* tenum) {
+void t_dart_generator::generate_enum(t_enum* tenum) {
   f_types_ << js_type_namespace(tenum->get_program())<<tenum->get_name()<<" = {"<<endl;
 
   if (gen_ts_) {
@@ -485,7 +485,7 @@ void t_js_generator::generate_enum(t_enum* tenum) {
 /**
  * Generate a constant value
  */
-void t_js_generator::generate_const(t_const* tconst) {
+void t_dart_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
@@ -505,7 +505,7 @@ void t_js_generator::generate_const(t_const* tconst) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
-string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
+string t_dart_generator::render_const_value(t_type* type, t_const_value* value) {
   std::ostringstream out;
 
   type = get_true_type(type);
@@ -604,7 +604,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
 /**
  * Make a struct
  */
-void t_js_generator::generate_struct(t_struct* tstruct) {
+void t_dart_generator::generate_struct(t_struct* tstruct) {
   generate_js_struct(tstruct, false);
 }
 
@@ -614,14 +614,14 @@ void t_js_generator::generate_struct(t_struct* tstruct) {
  *
  * @param txception The struct definition
  */
-void t_js_generator::generate_xception(t_struct* txception) {
+void t_dart_generator::generate_xception(t_struct* txception) {
   generate_js_struct(txception, true);
 }
 
 /**
  * Structs can be normal or exceptions.
  */
-void t_js_generator::generate_js_struct(t_struct* tstruct,
+void t_dart_generator::generate_js_struct(t_struct* tstruct,
                                             bool is_exception) {
   generate_js_struct_definition(f_types_, tstruct, is_exception);
 }
@@ -633,7 +633,7 @@ void t_js_generator::generate_js_struct(t_struct* tstruct,
  *
  * @param tstruct The struct definition
  */
-void t_js_generator::generate_js_struct_definition(ofstream& out,
+void t_dart_generator::generate_js_struct_definition(ofstream& out,
                                                        t_struct* tstruct,
                                                        bool is_exception,
                                                        bool is_exported) {
@@ -747,7 +747,7 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 /**
  * Generates the read() method for a struct
  */
-void t_js_generator::generate_js_struct_reader(ofstream& out,
+void t_dart_generator::generate_js_struct_reader(ofstream& out,
                                                    t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -831,7 +831,7 @@ void t_js_generator::generate_js_struct_reader(ofstream& out,
 /**
  * Generates the write() method for a struct
  */
-void t_js_generator::generate_js_struct_writer(ofstream& out,
+void t_dart_generator::generate_js_struct_writer(ofstream& out,
                                                    t_struct* tstruct) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
@@ -882,7 +882,7 @@ void t_js_generator::generate_js_struct_writer(ofstream& out,
  *
  * @param tservice The service definition
  */
-void t_js_generator::generate_service(t_service* tservice) {
+void t_dart_generator::generate_service(t_service* tservice) {
     string f_service_name = get_out_dir()+service_name_+".js";
     f_service_.open(f_service_name.c_str());
 
@@ -943,7 +943,7 @@ void t_js_generator::generate_service(t_service* tservice) {
  *
  * @param tservice The service to generate a server for.
  */
-void t_js_generator::generate_service_processor(t_service* tservice) {
+void t_dart_generator::generate_service_processor(t_service* tservice) {
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::iterator f_iter;
 
@@ -997,7 +997,7 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
  *
  * @param tfunction The function to write a dispatcher for
  */
-void t_js_generator::generate_process_function(t_service* tservice,
+void t_dart_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
     indent(f_service_) <<
         js_namespace(tservice->get_program()) << service_name_ << "Processor.prototype.process_" + tfunction->get_name() + " = function(seqid, input, output) ";
@@ -1103,7 +1103,7 @@ void t_js_generator::generate_process_function(t_service* tservice,
  *
  * @param tservice The service to generate a header definition for
  */
-void t_js_generator::generate_service_helpers(t_service* tservice) {
+void t_dart_generator::generate_service_helpers(t_service* tservice) {
 	  //Do not generate TS definitions for helper functions
 	  bool gen_ts_tmp = gen_ts_;
 	  gen_ts_ = false;
@@ -1131,7 +1131,7 @@ void t_js_generator::generate_service_helpers(t_service* tservice) {
  *
  * @param tfunction The function
  */
-void t_js_generator::generate_js_function_helpers(t_function* tfunction) {
+void t_dart_generator::generate_js_function_helpers(t_function* tfunction) {
     t_struct result(program_, service_name_ + "_" + tfunction->get_name() + "_result");
     t_field success(tfunction->get_returntype(), "success", 0);
     if (!tfunction->get_returntype()->is_void()) {
@@ -1153,14 +1153,14 @@ void t_js_generator::generate_js_function_helpers(t_function* tfunction) {
  *
  * @param tservice The service to generate a header definition for
  */
-void t_js_generator::generate_service_interface(t_service* tservice) {
+void t_dart_generator::generate_service_interface(t_service* tservice) {
   (void) tservice;
 }
 
 /**
  * Generates a REST interface
  */
-void t_js_generator::generate_service_rest(t_service* tservice) {
+void t_dart_generator::generate_service_rest(t_service* tservice) {
   (void) tservice;
 }
 
@@ -1169,7 +1169,7 @@ void t_js_generator::generate_service_rest(t_service* tservice) {
  *
  * @param tservice The service to generate a server for.
  */
-void t_js_generator::generate_service_client(t_service* tservice) {
+void t_dart_generator::generate_service_client(t_service* tservice) {
   if (gen_node_) {
     f_service_ <<
         js_namespace(tservice->get_program()) << service_name_ << "Client = " <<
@@ -1498,7 +1498,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
 }
 
-std::string t_js_generator::render_recv_throw(std::string var) {
+std::string t_dart_generator::render_recv_throw(std::string var) {
   if (gen_node_) {
     return "return callback(" + var + ");";
   } else {
@@ -1506,7 +1506,7 @@ std::string t_js_generator::render_recv_throw(std::string var) {
   }
 }
 
-std::string t_js_generator::render_recv_return(std::string var) {
+std::string t_dart_generator::render_recv_return(std::string var) {
   if (gen_node_) {
     return "return callback(null, " + var + ");";
   } else {
@@ -1517,7 +1517,7 @@ std::string t_js_generator::render_recv_return(std::string var) {
 /**
  * Deserializes a field of any type.
  */
-void t_js_generator::generate_deserialize_field(ofstream &out,
+void t_dart_generator::generate_deserialize_field(ofstream &out,
                                                   t_field* tfield,
                                                   string prefix,
                                                   bool inclass) {
@@ -1592,7 +1592,7 @@ void t_js_generator::generate_deserialize_field(ofstream &out,
  * buffer for deserialization, and that there is a variable protocol which
  * is a reference to a TProtocol serialization object.
  */
-void t_js_generator::generate_deserialize_struct(ofstream &out,
+void t_dart_generator::generate_deserialize_struct(ofstream &out,
                                                    t_struct* tstruct,
                                                    string prefix) {
     out <<
@@ -1601,7 +1601,7 @@ void t_js_generator::generate_deserialize_struct(ofstream &out,
 
 }
 
-void t_js_generator::generate_deserialize_container(ofstream &out,
+void t_dart_generator::generate_deserialize_container(ofstream &out,
                                                       t_type* ttype,
                                                       string prefix) {
   string size = tmp("_size");
@@ -1693,7 +1693,7 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
 /**
  * Generates code to deserialize a map
  */
-void t_js_generator::generate_deserialize_map_element(ofstream &out,
+void t_dart_generator::generate_deserialize_map_element(ofstream &out,
                                                         t_map* tmap,
                                                         string prefix) {
   string key = tmp("key");
@@ -1713,7 +1713,7 @@ void t_js_generator::generate_deserialize_map_element(ofstream &out,
       prefix << "[" << key << "] = " << val << ";" << endl;
 }
 
-void t_js_generator::generate_deserialize_set_element(ofstream &out,
+void t_dart_generator::generate_deserialize_set_element(ofstream &out,
                                                         t_set* tset,
                                                         string prefix) {
   string elem = tmp("elem");
@@ -1728,7 +1728,7 @@ void t_js_generator::generate_deserialize_set_element(ofstream &out,
       prefix << ".push(" << elem << ");" << endl;
 }
 
-void t_js_generator::generate_deserialize_list_element(ofstream &out,
+void t_dart_generator::generate_deserialize_list_element(ofstream &out,
                                                          t_list* tlist,
                                                          string prefix) {
   string elem = tmp("elem");
@@ -1750,7 +1750,7 @@ void t_js_generator::generate_deserialize_list_element(ofstream &out,
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_js_generator::generate_serialize_field(ofstream &out,
+void t_dart_generator::generate_serialize_field(ofstream &out,
                                                 t_field* tfield,
                                                 string prefix) {
   t_type* type = get_true_type(tfield->get_type());
@@ -1829,7 +1829,7 @@ void t_js_generator::generate_serialize_field(ofstream &out,
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_js_generator::generate_serialize_struct(ofstream &out,
+void t_dart_generator::generate_serialize_struct(ofstream &out,
                                                  t_struct* tstruct,
                                                  string prefix) {
   (void) tstruct;
@@ -1839,7 +1839,7 @@ void t_js_generator::generate_serialize_struct(ofstream &out,
 /**
  * Writes out a container
  */
-void t_js_generator::generate_serialize_container(ofstream &out,
+void t_dart_generator::generate_serialize_container(ofstream &out,
                                                     t_type* ttype,
                                                     string prefix) {
   if (ttype->is_map()) {
@@ -1918,7 +1918,7 @@ void t_js_generator::generate_serialize_container(ofstream &out,
  * Serializes the members of a map.
  *
  */
-void t_js_generator::generate_serialize_map_element(ofstream &out,
+void t_dart_generator::generate_serialize_map_element(ofstream &out,
                                                       t_map* tmap,
                                                       string kiter,
                                                       string viter) {
@@ -1932,7 +1932,7 @@ void t_js_generator::generate_serialize_map_element(ofstream &out,
 /**
  * Serializes the members of a set.
  */
-void t_js_generator::generate_serialize_set_element(ofstream &out,
+void t_dart_generator::generate_serialize_set_element(ofstream &out,
                                                       t_set* tset,
                                                       string iter) {
   t_field efield(tset->get_elem_type(), iter);
@@ -1942,7 +1942,7 @@ void t_js_generator::generate_serialize_set_element(ofstream &out,
 /**
  * Serializes the members of a list.
  */
-void t_js_generator::generate_serialize_list_element(ofstream &out,
+void t_dart_generator::generate_serialize_list_element(ofstream &out,
                                                        t_list* tlist,
                                                        string iter) {
   t_field efield(tlist->get_elem_type(), iter);
@@ -1954,7 +1954,7 @@ void t_js_generator::generate_serialize_list_element(ofstream &out,
  *
  * @param ttype The type
  */
-string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
+string t_dart_generator::declare_field(t_field* tfield, bool init, bool obj) {
   string result = "this." + tfield->get_name();
 
   if(!obj){
@@ -2005,7 +2005,7 @@ string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
  * @param tfunction Function definition
  * @return String of rendered function definition
  */
-string t_js_generator::function_signature(t_function* tfunction,
+string t_dart_generator::function_signature(t_function* tfunction,
                                             string prefix,
                                             bool include_callback) {
 
@@ -2022,7 +2022,7 @@ string t_js_generator::function_signature(t_function* tfunction,
 /**
  * Renders a field list
  */
-string t_js_generator::argument_list(t_struct* tstruct,
+string t_dart_generator::argument_list(t_struct* tstruct,
                                        bool include_callback) {
   string result = "";
 
@@ -2051,7 +2051,7 @@ string t_js_generator::argument_list(t_struct* tstruct,
 /**
  * Converts the parse type to a C++ enum string for the given type.
  */
-string t_js_generator::type_to_enum(t_type* type) {
+string t_dart_generator::type_to_enum(t_type* type) {
   type = get_true_type(type);
 
   if (type->is_base_type()) {
@@ -2094,7 +2094,7 @@ string t_js_generator::type_to_enum(t_type* type) {
  * @param t_type Type to convert to TypeScript
  * @return String TypeScript type
  */
-string t_js_generator::ts_get_type(t_type* type) {
+string t_dart_generator::ts_get_type(t_type* type) {
   std::string ts_type;
 
   type = get_true_type(type);
@@ -2153,7 +2153,7 @@ string t_js_generator::ts_get_type(t_type* type) {
  * @param bool in-/exclude the callback argument
  * @return String of rendered function definition
  */
-std::string t_js_generator::ts_function_signature(t_function* tfunction, bool include_callback) {
+std::string t_dart_generator::ts_function_signature(t_function* tfunction, bool include_callback) {
   string str;
   const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -2184,4 +2184,4 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction, bool in
 }
 
 
-THRIFT_REGISTER_GENERATOR(dart, "Dart")
+THRIFT_REGISTER_GENERATOR(dart, "Dart", "")
