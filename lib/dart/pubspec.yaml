@@ -1,0 +1,11 @@
+name: thrift
+version: 0.0.1-dev
+authors:
+- Adam Singer <financeCoding@gmail.com>
+description: thrift
+homepage: https://thrift.apache.org/
+environment:
+  sdk: '>=1.0.0 <2.0.0'
+# dependencies:
+dev_dependencies:
+  unittest: ">=0.10.1+2 <0.11.0"
