@@ -375,6 +375,7 @@ string t_dart_generator::dart_includes() {
 }
 
 string t_dart_generator::dart_library_name(std::string library_name) {
+	// TODO: use namespace and/or default to a library name.
 	return string("library " + library_name + ";");
 }
 
@@ -635,7 +636,7 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
        t_type* t = get_true_type((*m_iter)->get_type());
        if (t->is_xception()) {
-                       out << indent() <<  "if (args instanceof " << js_type_namespace(t->get_program()) << t->get_name() << ") {" << endl
+                       out << indent() <<  "if (args is " << js_type_namespace(t->get_program()) << t->get_name() << ") {" << endl
                                << indent() << indent() << "this." << (*m_iter)->get_name() << " = args;" << endl
                                << indent() << indent() << "return;" << endl
                                << indent() << "}" << endl;
