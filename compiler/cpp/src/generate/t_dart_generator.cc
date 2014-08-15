@@ -174,7 +174,8 @@ class t_dart_generator : public t_oop_generator {
    * Helper rendering functions
    */
 
-  std::string js_includes();
+  std::string dart_includes();
+  std::string dart_library_name(std::string library_name);
   std::string render_includes();
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="", bool include_callback=false);
@@ -335,8 +336,9 @@ void t_dart_generator::init_generator() {
 
   // Print header
   f_types_ <<
-    autogen_comment() <<
-    js_includes() << endl <<
+    autogen_comment() << endl <<
+    dart_library_name(program_->get_name()+"_types") << endl << endl <<
+    dart_includes() << endl <<
     render_includes() << endl;
 
   if (gen_node_) {
@@ -362,14 +364,18 @@ void t_dart_generator::init_generator() {
 /**
  * Prints standard js imports
  */
-string t_dart_generator::js_includes() {
-  if (gen_node_) {
-    return string("var thrift = require('thrift');\n"
-      "var Thrift = thrift.Thrift;\n"
-      "var Q = thrift.Q;\n");
-  }
+string t_dart_generator::dart_includes() {
+//  if (gen_node_) {
+//    return string("var thrift = require('thrift');\n"
+//      "var Thrift = thrift.Thrift;\n"
+//      "var Q = thrift.Q;\n");
+//  }
 
-  return "";
+  return string("import 'package:thrift/thrift.dart';");
+}
+
+string t_dart_generator::dart_library_name(std::string library_name) {
+	return string("library " + library_name + ";");
 }
 
 /**
@@ -815,8 +821,9 @@ void t_dart_generator::generate_service(t_service* tservice) {
     f_service_.open(f_service_name.c_str());
 
     f_service_ <<
-      autogen_comment() <<
-      js_includes() << endl <<
+      autogen_comment() << endl <<
+      dart_library_name(service_name_) << endl << endl <<
+      dart_includes() << endl <<
       render_includes() << endl;
 
     if (gen_node_) {
