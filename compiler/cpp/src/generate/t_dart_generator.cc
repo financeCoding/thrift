@@ -178,7 +178,7 @@ class t_dart_generator : public t_oop_generator {
   std::string render_includes();
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="", bool include_callback=false);
-  std::string argument_list(t_struct* tstruct, bool include_callback=false);
+  std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
 
   std::string autogen_comment() {
@@ -228,11 +228,10 @@ class t_dart_generator : public t_oop_generator {
   }
 
   std::string js_namespace(t_program* p) {
-      std::string ns = p->get_namespace("js");
+      std::string ns = p->get_namespace("dart");
       if (ns.size() > 0) {
           ns += ".";
       }
-
 
       return ns;
   }
@@ -331,7 +330,7 @@ void t_dart_generator::init_generator() {
   string outdir = get_out_dir();
 
   // Make output file(s)
-  string f_types_name = outdir+program_->get_name()+"_types.js";
+  string f_types_name = outdir+program_->get_name()+"_types.dart";
   f_types_.open(f_types_name.c_str());
 
   // Print header
@@ -589,24 +588,19 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
-  if (gen_node_) {
-    if (is_exported) {
-      out << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = " <<
-        "module.exports." << tstruct->get_name() << " = function(args) {" << endl;
-    } else {
-      out << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args) {" << endl;
-    }
-  } else {
-    out << js_namespace(tstruct->get_program()) << tstruct->get_name() <<" = function(args) {" << endl;
-  }
+  out << "class " << tstruct->get_name() <<" {" << endl;
+
+  indent_up();
+  out << indent() << tstruct->get_name() <<"(args) {" << endl;
+
 
   indent_up();
 
   if (gen_node_ && is_exception) {
       out << indent() << "Thrift.TException.call(this, \"" <<
-          js_namespace(tstruct->get_program()) << tstruct->get_name() << "\")" << endl;
+          tstruct->get_name() << "\")" << endl;
       out << indent() << "this.name = \"" <<
-          js_namespace(tstruct->get_program()) << tstruct->get_name() << "\"" << endl;
+          tstruct->get_name() << "\"" << endl;
   }
 
   //members with arguments
@@ -653,25 +647,25 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
 
     out << indent() <<  "}" << endl;
 
+    indent_down();
   }
 
+  out << indent() << "} //TODO: end of constructor " << tstruct->get_name() << endl << endl;
   indent_down();
-  out << "};" << endl;
 
   if (is_exception) {
     out << "Thrift.inherits(" <<
-        js_namespace(tstruct->get_program()) <<
         tstruct->get_name() << ", Thrift.TException);" << endl;
-	out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype.name = '" << tstruct->get_name() << "';" << endl;
-  } else {
-    //init prototype
-    out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype = {};" << endl;
+	out << tstruct->get_name() <<".prototype.name = '" << tstruct->get_name() << "';" << endl;
   }
 
 
   generate_js_struct_reader(out, tstruct);
+
   generate_js_struct_writer(out, tstruct);
 
+  out << indent() << "} //TODO: end of class " << tstruct->get_name() << endl << endl;
+  //indent_down();
 }
 
 /**
@@ -682,7 +676,9 @@ void t_dart_generator::generate_js_struct_reader(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out <<  js_namespace(tstruct->get_program())<<tstruct->get_name() << ".prototype.read = function(input) {"<<endl;
+  indent_up();
+
+  out << indent() << "void read(input) {"<<endl;
 
   indent_up();
 
@@ -755,7 +751,8 @@ void t_dart_generator::generate_js_struct_reader(ofstream& out,
   indent(out) << "return;" << endl;
 
   indent_down();
-  out << indent() << "};" << endl << endl;
+  out << indent() << "}" << endl << endl;
+  indent_down();
 }
 
 /**
@@ -767,7 +764,9 @@ void t_dart_generator::generate_js_struct_writer(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out << js_namespace(tstruct->get_program())<< tstruct->get_name() << ".prototype.write = function(output) {"<<endl;
+  indent_up();
+
+  out << indent() << "void write(output) {"<<endl;
 
   indent_up();
 
@@ -802,9 +801,8 @@ void t_dart_generator::generate_js_struct_writer(ofstream& out,
   out <<indent() << "return;" << endl;
 
   indent_down();
-  out <<
-    indent() << "};" << endl <<
-    endl;
+  out << indent() << "}" << endl << endl;
+  indent_down();
 }
 
 /**
@@ -813,7 +811,7 @@ void t_dart_generator::generate_js_struct_writer(ofstream& out,
  * @param tservice The service definition
  */
 void t_dart_generator::generate_service(t_service* tservice) {
-    string f_service_name = get_out_dir()+service_name_+".js";
+    string f_service_name = get_out_dir()+service_name_+".dart";
     f_service_.open(f_service_name.c_str());
 
     f_service_ <<
@@ -857,8 +855,8 @@ void t_dart_generator::generate_service_processor(t_service* tservice) {
     vector<t_function*>::iterator f_iter;
 
     f_service_ <<
-        js_namespace(tservice->get_program()) << service_name_ << "Processor = " <<
-        "exports.Processor = function(handler) ";
+        service_name_ << "Processor = " <<
+        "exports.Processor(handler) ";
 
     scope_up(f_service_);
 
@@ -868,14 +866,13 @@ void t_dart_generator::generate_service_processor(t_service* tservice) {
 
     if (tservice->get_extends() != NULL) {
         indent(f_service_) << "Thrift.inherits(" <<
-            js_namespace(tservice->get_program()) <<
             service_name_ << "Processor, " <<
             tservice->get_extends()->get_name() << "Processor)" << endl;
     }
 
     // Generate the server implementation
     indent(f_service_) <<
-        js_namespace(tservice->get_program()) << service_name_ << "Processor.prototype.process = function(input, output) ";
+        service_name_ << "Processor.prototype.process(input, output) ";
 
     scope_up(f_service_);
 
@@ -909,7 +906,7 @@ void t_dart_generator::generate_service_processor(t_service* tservice) {
 void t_dart_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
     indent(f_service_) <<
-        js_namespace(tservice->get_program()) << service_name_ << "Processor.prototype.process_" + tfunction->get_name() + " = function(seqid, input, output) ";
+        service_name_ << "Processor.prototype.process_" + tfunction->get_name() + " = function(seqid, input, output) ";
 
     scope_up(f_service_);
 
@@ -1077,11 +1074,14 @@ void t_dart_generator::generate_service_rest(t_service* tservice) {
 void t_dart_generator::generate_service_client(t_service* tservice) {
   if (gen_node_) {
     f_service_ <<
-        js_namespace(tservice->get_program()) << service_name_ << "Client = " <<
-        "exports.Client = function(output, pClass) {"<<endl;
+        service_name_ << "Client = " <<
+        "exports.Client(output, pClass) {"<<endl;
   } else {
-    f_service_ <<
-        js_namespace(tservice->get_program()) << service_name_ << "Client = function(input, output) {"<<endl;
+	f_service_ << "class " << service_name_ << "Client {"<<endl;
+
+	indent_up();
+
+	f_service_ <<  indent() << service_name_ << "Client(input, output) {"<<endl;
   }
 
   indent_up();
@@ -1104,23 +1104,19 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
   indent_down();
 
   f_service_ <<
-      indent() << "};" << endl;
+      indent() << "}" << endl;
 
 
   if (tservice->get_extends() != NULL) {
     indent(f_service_) << "Thrift.inherits(" <<
-        js_namespace(tservice->get_program()) <<
         service_name_ << "Client, " <<
         tservice->get_extends()->get_name() << "Client);" << endl;
-  } else {
-      //init prototype
-      indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype = {};"<<endl;
   }
 
   // utils for multiplexed services
   if (gen_node_) {
-    indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype.seqid = function() { return this._seqid; }" << endl <<
-    js_namespace(tservice->get_program())<<service_name_ << "Client.prototype.new_seqid = function() { return this._seqid += 1; }" << endl;
+    indent(f_service_) <<  service_name_ << "Client.prototype.seqid() { return this._seqid; }" << endl <<
+    service_name_ << "Client.prototype.new_seqid() { return this._seqid += 1; }" << endl;
   }
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -1133,7 +1129,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     string arglist = argument_list(arg_struct);
 
     // Open function
-    f_service_ <<  js_namespace(tservice->get_program())<<service_name_<<"Client.prototype." <<
+    f_service_ << indent() <<
       function_signature(*f_iter, "", true) << " {" << endl;
 
     indent_up();
@@ -1145,7 +1141,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
       indent_up();
       f_service_ <<
         indent() << "var _defer = Q.defer();" << endl <<
-        indent() << "this._reqs[this.seqid()] = function(error, result) {" << endl;
+        indent() << "this._reqs[this.seqid()] = (error, result) {" << endl;
       indent_up();
       indent(f_service_) << "if (error) {" << endl;
       indent_up();
@@ -1208,12 +1204,12 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
 
     indent_down();
 
-    f_service_ << "};" << endl << endl;
+    f_service_ << indent() << "}" << endl << endl;
 
 
     // Send function
-    f_service_ <<  js_namespace(tservice->get_program())<<service_name_ <<
-      "Client.prototype.send_" << function_signature(*f_iter, "", !gen_node_) << " {" << endl;
+    // f_service_ << "send_" << function_signature(*f_iter, "", !gen_node_) << " {" << endl;
+    f_service_ << indent() << function_signature(*f_iter, "send_", !gen_node_) << " {" << endl;
 
     indent_up();
 
@@ -1274,17 +1270,16 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
 
     indent_down();
 
-    f_service_ << "};" << endl;
+    f_service_ << indent() << "}" << endl;
 
 
     if (!(*f_iter)->is_oneway()) {
-      std::string resultname = js_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_result";
+      std::string resultname = service_name_ + "_" + (*f_iter)->get_name() + "_result";
 
       if (gen_node_) {
         // Open function
         f_service_ <<
-            endl <<  js_namespace(tservice->get_program())<<service_name_ <<
-            "Client.prototype.recv_" << (*f_iter)->get_name() << " = function(input,mtype,rseqid) {" << endl;
+            endl << indent() << "recv_" << (*f_iter)->get_name() << "(input,mtype,rseqid) {" << endl;
       } else {
         t_struct noargs(program_);
 
@@ -1293,8 +1288,7 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
                                  &noargs);
         // Open function
         f_service_ <<
-            endl <<  js_namespace(tservice->get_program())<<service_name_ <<
-            "Client.prototype." << function_signature(&recv_function) << " {" << endl;
+            endl << indent() << function_signature(&recv_function) << " {" << endl;
       }
 
       indent_up();
@@ -1365,10 +1359,17 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
 
       // Close function
       indent_down();
-      f_service_ << "};"<<endl;
+      f_service_ << indent() << "}"<<endl << endl;
 
     }
   }
+
+  /// TODO: move to end of scope
+  indent_down();
+
+  f_service_ <<
+      indent() << "}" << endl;
+  ///
 
 }
 
@@ -1885,9 +1886,13 @@ string t_dart_generator::function_signature(t_function* tfunction,
 
   string str;
 
-  str  = prefix + tfunction->get_name() + " = function(";
+  if (include_callback) {
+	  str  = "Future " + prefix + tfunction->get_name() + "(";
+  } else {
+	  str  = prefix + tfunction->get_name() + "(";
+  }
 
-  str += argument_list(tfunction->get_arglist(), include_callback);
+  str += argument_list(tfunction->get_arglist());
 
   str += ")";
   return str;
@@ -1896,8 +1901,7 @@ string t_dart_generator::function_signature(t_function* tfunction,
 /**
  * Renders a field list
  */
-string t_dart_generator::argument_list(t_struct* tstruct,
-                                       bool include_callback) {
+string t_dart_generator::argument_list(t_struct* tstruct) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -1910,13 +1914,6 @@ string t_dart_generator::argument_list(t_struct* tstruct,
       result += ", ";
     }
     result += (*f_iter)->get_name();
-  }
-
-  if (include_callback) {
-    if (!fields.empty()) {
-      result += ", ";
-    }
-    result += "callback";
   }
 
   return result;
