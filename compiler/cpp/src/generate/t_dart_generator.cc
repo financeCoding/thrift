@@ -371,7 +371,8 @@ string t_dart_generator::dart_includes() {
 //      "var Q = thrift.Q;\n");
 //  }
 
-  return string("import 'package:thrift/thrift.dart';");
+  return string("import 'dart:async';\n\n"
+		  "import 'package:thrift/thrift.dart';");
 }
 
 string t_dart_generator::dart_library_name(std::string library_name) {
