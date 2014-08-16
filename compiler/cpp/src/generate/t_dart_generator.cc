@@ -599,6 +599,20 @@ void t_dart_generator::generate_js_struct_definition(ofstream& out,
   out << "class " << tstruct->get_name() <<" {" << endl;
 
   indent_up();
+
+  //declare class members
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    string dval = declare_field(*m_iter,false,false);
+    t_type* t = get_true_type((*m_iter)->get_type());
+    if ((*m_iter)->get_value() != NULL && !(t->is_struct() || t->is_xception())) {
+        dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
+        out << indent() << "dynamic " << (*m_iter)->get_name() << ";" << endl;
+    } else {
+        out << indent() << dval << ";" << endl;
+    }
+  }
+
+
   out << indent() << tstruct->get_name() <<"(args) {" << endl;
 
 
@@ -1089,6 +1103,11 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
 	f_service_ << "class " << service_name_ << "Client {"<<endl;
 
 	indent_up();
+
+    f_service_ <<
+      indent() << "dynamic input;" << endl <<
+      indent() << "dynamic output;" << endl <<
+      indent() << "dynamic seqid = 0;" << endl;
 
 	f_service_ <<  indent() << service_name_ << "Client(input, output) {"<<endl;
   }
@@ -1842,7 +1861,7 @@ string t_dart_generator::declare_field(t_field* tfield, bool init, bool obj) {
   string result = "this." + tfield->get_name();
 
   if(!obj){
-      result = "var " + tfield->get_name();
+      result = "dynamic " + tfield->get_name();
   }
 
   if (init) {
