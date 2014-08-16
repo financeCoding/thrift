@@ -371,6 +371,9 @@ string t_dart_generator::dart_includes() {
 //      "var Q = thrift.Q;\n");
 //  }
 
+	// TODO: the types file might not need 'dart:async'.
+	// do a conditonal import or List of strings that are
+	// core dart libraries to import for the file.
   return string("import 'dart:async';\n\n"
 		  "import 'package:thrift/thrift.dart';");
 }
